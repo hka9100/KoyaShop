@@ -475,7 +475,25 @@
   </div>
 </footer>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyASHy-ZNSEy6W64vF6-UW-YwYJUAEjM1JE",
+  authDomain: "koya-shop-3fdb0.firebaseapp.com",
+  databaseURL: "https://koya-shop-3fdb0-default-rtdb.firebaseio.com",
+  projectId: "koya-shop-3fdb0",
+  storageBucket: "koya-shop-3fdb0.firebasestorage.app",
+  messagingSenderId: "273272012315",
+  appId: "1:273272012315:web:4b0b71b9a94bc00cb2c2be",
+  measurementId: "G-JH4PJNV752"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const productsRef = ref(db, 'products');
+
 // ========================
 // PRODUCTS DATA
 // ========================
@@ -490,13 +508,25 @@ const defaultProducts = [
   { id:'boost5', icon:'🔥', name:'5 Server Boosts', desc:'Pack 5 boosts pour atteindre le niveau 2.', color:'pink', badgeClass:'badge-pink', badgeLabel:'Pack Boost', features:['Niveau 2 accessible','100 emojis personnalisés','Bannière serveur animée'], price:13.99, period:'5 boosts · 1 mois', available:false, popular:false },
 ];
 
-function loadProducts() {
-  try { return JSON.parse(localStorage.getItem('koya_products')) || defaultProducts; } catch(e) { return defaultProducts; }
+async function saveProducts(products) {
+  await set(productsRef, products);
 }
-function saveProducts(products) { localStorage.setItem('koya_products', JSON.stringify(products)); }
 
-let products = loadProducts();
+let products = [];
 let cart = [];
+
+// Écoute Firebase en temps réel — tous les clients voient les changements instantanément
+onValue(productsRef, (snapshot) => {
+  if (snapshot.exists()) {
+    products = snapshot.val();
+  } else {
+    // Première fois : initialise Firebase avec les données par défaut
+    products = defaultProducts;
+    saveProducts(products);
+  }
+  renderProducts();
+  if (document.getElementById('dashboard').classList.contains('show')) renderDashboard();
+});
 
 // ========================
 // RENDER PRODUCTS
@@ -713,22 +743,35 @@ function renderDashboard() {
   });
 }
 
-function saveProduct(i) {
+async function saveProduct(i) {
   products[i].name = document.getElementById(`d-name-${i}`).value;
   products[i].desc = document.getElementById(`d-desc-${i}`).value;
   products[i].price = parseFloat(document.getElementById(`d-price-${i}`).value) || products[i].price;
   products[i].period = document.getElementById(`d-period-${i}`).value;
   products[i].available = document.getElementById(`d-avail-${i}`).checked;
-  saveProducts(products);
-  renderProducts();
+  await saveProducts(products);
   showToast('Produit mis à jour ! ✓');
 }
 
 // ========================
 // INIT
 // ========================
-renderProducts();
 document.querySelectorAll('.animate-in').forEach(el => observer.observe(el));
+
+// Exposition globale des fonctions (requis pour type="module")
+window.addToCart = addToCart;
+window.removeFromCart = removeFromCart;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.checkout = checkout;
+window.closeConfirm = closeConfirm;
+window.toggleFaq = toggleFaq;
+window.openLogin = openLogin;
+window.closeLogin = closeLogin;
+window.checkLogin = checkLogin;
+window.openDashboard = openDashboard;
+window.closeDashboard = closeDashboard;
+window.saveProduct = saveProduct;
 </script>
 </body>
 </html>
