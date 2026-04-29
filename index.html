@@ -160,12 +160,11 @@
 
   .card-icon { font-size: 2.2rem; margin-bottom: 14px; line-height: 1; }
   .card-title { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 8px; }
-  .card-desc { font-size: 0.83rem; color: var(--muted); line-height: 1.6; margin-bottom: 20px; }
+  .card-desc { font-size: 0.83rem; color: var(--muted); line-height: 1.6; margin-bottom: 20px; flex: 1; }
   .card-features { list-style: none; margin-bottom: 20px; }
   .card-features li { font-size: 0.8rem; color: var(--muted); padding: 3px 0; display: flex; align-items: center; gap: 8px; }
   .card-features li::before { content: '✓'; font-size: 0.72rem; font-weight: 700; color: var(--green); flex-shrink: 0; }
 
-  .card-spacer { flex: 1; }
   .card-price { margin-bottom: 18px; }
   .price-amount { font-size: 1.9rem; font-weight: 800; letter-spacing: -1px; line-height: 1; }
   .price-period { font-size: 0.78rem; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: 2px; }
@@ -432,7 +431,13 @@
 </div>
 
 <!-- PRODUITS -->
-<div id="products-root"></div>
+<section class="section" id="produits">
+  <div class="section-header animate-in">
+    <div class="section-tag">// NOS PRODUITS</div>
+    <div class="section-title">Tous les produits</div>
+  </div>
+  <div class="grid" id="products-grid"></div>
+</section>
 
 <!-- FAQ -->
 <section class="section" id="faq">
@@ -475,110 +480,56 @@
   </div>
 </footer>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyASHy-ZNSEy6W64vF6-UW-YwYJUAEjM1JE",
-  authDomain: "koya-shop-3fdb0.firebaseapp.com",
-  databaseURL: "https://koya-shop-3fdb0-default-rtdb.firebaseio.com",
-  projectId: "koya-shop-3fdb0",
-  storageBucket: "koya-shop-3fdb0.firebasestorage.app",
-  messagingSenderId: "273272012315",
-  appId: "1:273272012315:web:4b0b71b9a94bc00cb2c2be",
-  measurementId: "G-JH4PJNV752"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const productsRef = ref(db, 'products');
-
+<script>
 // ========================
 // PRODUCTS DATA
 // ========================
 const defaultProducts = [
-  { id:'nitro', icon:'🚀', name:'Discord Nitro', desc:'Le Nitro complet — tout ce que Discord a à offrir, avec 2 boosts et 30% de réduction sur les boosts supplémentaires.', color:'blurple', badgeClass:'badge-blurple', badgeLabel:'Nitro Complet', features:['Emojis & autocollants personnalisés animés','Icônes d\'application personnalisées','Super réactions','Upload jusqu\'à 500 Mo','Streaming jusqu\'en 4K et 60 fps','2 boosts + 30% réduction boosts supp.','Avatar animé, bannière et thème de profil','Styles de nom d\'affichage','Profils par serveur personnalisés','Couleurs pour ton thème Discord','Badge Nitro sur ton profil','Arrière-plans vidéo personnalisés','Sons personnalisés partout + sons d\'entrée','Rejoins jusqu\'à 200 serveurs','Messages jusqu\'à 4000 caractères','3 passes d\'ami Nitro'], price:5.99, period:'1 mois', available:true, popular:true },
-  { id:'basic', icon:'🎮', name:'Discord Nitro Basic', desc:'L\'essentiel Discord à petit prix : emojis animés, stickers, badge et plus encore.', color:'blurple', badgeClass:'badge-blurple', badgeLabel:'Nitro Basic', features:['Emojis personnalisés animés partout','Autocollants personnalisés','Icônes d\'application personnalisées','Super réactions','Upload fichiers jusqu\'à 50 Mo','Badge Nitro sur ton profil','Arrière-plans vidéo personnalisés'], price:1.99, period:'1 mois', available:true, popular:false },
-  { id:'boost14', icon:'👑', name:'14 Server Boosts', desc:'Propulse ton serveur au niveau 3 instantanément avec tous les avantages premium.', color:'pink', badgeClass:'badge-pink', badgeLabel:'Méga Pack', features:['Niveau 3 instantané','250 emojis personnalisés','Upload serveur 100 Mo','Qualité audio 384 kbps','Bannière de serveur animée','Sticker slots supplémentaires'], price:8.00, period:'14 boosts · 1 mois', available:true, popular:false },
-  { id:'spotify', icon:'🎵', name:'Spotify Premium Lifetime', desc:'Profite de Spotify Premium sans publicité, pour toujours. Musique illimitée à vie.', color:'spotify', badgeClass:'badge-spotify', badgeLabel:'Lifetime', features:['Zéro publicité','Écoute hors ligne illimitée','Qualité audio maximale','Accès illimité à tout le catalogue','Valable à vie'], price:6.99, period:'à vie', available:true, popular:false },
-  { id:'nitro3', icon:'⭐', name:'Discord Nitro 3 mois', desc:'Nitro complet pour 3 mois.', color:'gold', badgeClass:'badge-gold', badgeLabel:'Promo', features:['Tout le contenu Nitro complet','2 boosts inclus','3 mois sans interruption'], price:17.99, period:'3 mois', available:false, popular:false },
-  { id:'nitro12', icon:'💎', name:'Discord Nitro 12 mois', desc:'Nitro complet pour toute l\'année.', color:'gold', badgeClass:'badge-gold', badgeLabel:'Annuel', features:['Tout le contenu Nitro complet','2 boosts inclus','12 mois sans interruption'], price:59.99, period:'12 mois', available:false, popular:false },
-  { id:'boost1', icon:'✨', name:'1 Server Boost', desc:'Un boost serveur pour 1 mois.', color:'pink', badgeClass:'badge-pink', badgeLabel:'Boost', features:['+1 niveau de boost','Emoji custom supplémentaire'], price:3.49, period:'1 mois', available:false, popular:false },
-  { id:'boost5', icon:'🔥', name:'5 Server Boosts', desc:'Pack 5 boosts pour atteindre le niveau 2.', color:'pink', badgeClass:'badge-pink', badgeLabel:'Pack Boost', features:['Niveau 2 accessible','100 emojis personnalisés','Bannière serveur animée'], price:13.99, period:'5 boosts · 1 mois', available:false, popular:false },
+  { id:'nitro', icon:'🚀', name:'Discord Nitro', desc:'Nitro complet avec 2 boosts inclus, upload 500Mo, streaming 4K.', color:'blurple', badgeClass:'badge-blurple', badgeLabel:'Nitro Complet', features:['2 boosts de serveur inclus','Upload 500 Mo','Streaming 4K 60fps','Emojis & stickers premium'], price:5.99, period:'1 mois', available:true, popular:true },
+  { id:'basic', icon:'🎮', name:'Discord Nitro Basic', desc:'L\'essentiel : emojis animés, avatar GIF, badge exclusif.', color:'blurple', badgeClass:'badge-blurple', badgeLabel:'Nitro Basic', features:['Emojis animés partout','Avatar & bannière GIF','Badge profil exclusif','Upload 50 Mo'], price:1.99, period:'1 mois', available:true, popular:false },
+  { id:'boost14', icon:'👑', name:'14 Server Boosts', desc:'Propulse ton serveur au niveau 3 instantanément.', color:'pink', badgeClass:'badge-pink', badgeLabel:'Méga Pack', features:['Niveau 3 instantané','250 emojis custom','Upload 100 Mo serveur','Audio 384kbps'], price:11.99, period:'14 boosts · 1 mois', available:true, popular:false },
+  { id:'spotify', icon:'🎵', name:'Spotify Premium Lifetime', desc:'Profite de Spotify sans publicité pour toujours.', color:'spotify', badgeClass:'badge-spotify', badgeLabel:'Lifetime', features:['Sans publicité','Écoute hors ligne','Qualité audio maximale','Accès illimité'], price:6.99, period:'à vie', available:true, popular:false },
+  { id:'nitro3', icon:'⭐', name:'Discord Nitro 3 mois', desc:'Nitro classique pour 3 mois.', color:'gold', badgeClass:'badge-gold', badgeLabel:'Promo', features:['Tout Nitro Classique','2 boosts inclus','3 mois non-stop'], price:17.99, period:'3 mois', available:false, popular:false },
+  { id:'nitro12', icon:'💎', name:'Discord Nitro 12 mois', desc:'Nitro pour toute l\'année.', color:'gold', badgeClass:'badge-gold', badgeLabel:'Annuel', features:['Tout Nitro Classique','2 boosts inclus','12 mois'], price:59.99, period:'12 mois', available:false, popular:false },
+  { id:'boost1', icon:'✨', name:'1 Server Boost', desc:'Un boost serveur pour 1 mois.', color:'pink', badgeClass:'badge-pink', badgeLabel:'Boost', features:['+1 niveau boost','Emoji custom supplémentaire'], price:3.49, period:'1 mois', available:false, popular:false },
+  { id:'boost5', icon:'🔥', name:'5 Server Boosts', desc:'Pack 5 boosts serveur pour le niveau 2.', color:'pink', badgeClass:'badge-pink', badgeLabel:'Pack Boost', features:['Niveau 2 accessible','100 emojis custom','Bannière animée'], price:13.99, period:'5 boosts · 1 mois', available:false, popular:false },
 ];
 
-async function saveProducts(products) {
-  await set(productsRef, products);
+function loadProducts() {
+  try { return JSON.parse(localStorage.getItem('koya_products')) || defaultProducts; } catch(e) { return defaultProducts; }
 }
+function saveProducts(products) { localStorage.setItem('koya_products', JSON.stringify(products)); }
 
-let products = [];
+let products = loadProducts();
 let cart = [];
-
-// Écoute Firebase en temps réel — tous les clients voient les changements instantanément
-onValue(productsRef, (snapshot) => {
-  if (snapshot.exists()) {
-    products = snapshot.val();
-  } else {
-    // Première fois : initialise Firebase avec les données par défaut
-    products = defaultProducts;
-    saveProducts(products);
-  }
-  renderProducts();
-  if (document.getElementById('dashboard').classList.contains('show')) renderDashboard();
-});
 
 // ========================
 // RENDER PRODUCTS
 // ========================
-const categories = [
-  { id:'nitro',   tag:'// DISCORD NITRO',    title:'Abonnements Nitro',  ids:['nitro','basic','nitro3','nitro12'] },
-  { id:'boosts',  tag:'// SERVER BOOSTS',    title:'Boosts de serveur',  ids:['boost1','boost5','boost14'] },
-  { id:'autres',  tag:'// AUTRES',           title:'Autres produits',    ids:['spotify'] },
-];
-
-function makeCard(p) {
-  const priceColor = p.color==='gold'?'var(--gold)':p.color==='spotify'?'var(--spotify)':p.color==='pink'?'var(--pink)':'var(--text)';
-  const btnClass = p.color==='gold'?'btn-gold':p.color==='spotify'?'btn-spotify':p.color==='pink'?'btn-outline':'btn-blurple';
-  const div = document.createElement('div');
-  div.className = `card ${p.color} animate-in${!p.available?' unavailable':''}`;
-  div.innerHTML = `
-    ${p.popular?'<div class="popular-pill">⭐ Populaire</div>':''}
-    ${!p.available?'<div class="unavailable-overlay"><span class="unavailable-tag">⏳ Indisponible</span></div>':''}
-    <div class="card-badge ${p.badgeClass}">${p.badgeLabel}</div>
-    <div class="card-icon">${p.icon}</div>
-    <div class="card-title">${p.name}</div>
-    <div class="card-desc">${p.desc}</div>
-    <ul class="card-features">${p.features.map(f=>`<li>${f}</li>`).join('')}</ul>
-    <div class="card-spacer"></div>
-    <div class="card-price">
-      <div class="price-amount" style="color:${priceColor}">${p.price.toFixed(2)} €</div>
-      <div class="price-period">${p.period}</div>
-    </div>
-    <button class="btn btn-card ${btnClass}" onclick="addToCart('${p.id}')" ${!p.available?'disabled':''}>
-      ${p.available?'Ajouter au panier':'Indisponible'}
-    </button>`;
-  return div;
-}
-
 function renderProducts() {
-  const root = document.getElementById('products-root');
-  root.innerHTML = '';
-  categories.forEach(cat => {
-    const catProducts = cat.ids.map(id => products.find(p => p.id===id)).filter(Boolean);
-    const section = document.createElement('section');
-    section.className = 'section';
-    if (cat.id === 'nitro') section.id = 'produits';
-    section.innerHTML = `
-      <div class="section-header animate-in">
-        <div class="section-tag">${cat.tag}</div>
-        <div class="section-title">${cat.title}</div>
+  const grid = document.getElementById('products-grid');
+  grid.innerHTML = '';
+  products.forEach(p => {
+    const div = document.createElement('div');
+    div.className = `card ${p.color} animate-in${!p.available ? ' unavailable' : ''}`;
+    div.innerHTML = `
+      ${p.popular ? '<div class="popular-pill">⭐ Populaire</div>' : ''}
+      ${!p.available ? '<div class="unavailable-overlay"><span class="unavailable-tag">⏳ Indisponible</span></div>' : ''}
+      <div class="card-badge ${p.badgeClass}">${p.badgeLabel}</div>
+      <div class="card-icon">${p.icon}</div>
+      <div class="card-title">${p.name}</div>
+      <div class="card-desc">${p.desc}</div>
+      <ul class="card-features">${p.features.map(f=>`<li>${f}</li>`).join('')}</ul>
+      <div class="card-price">
+        <div class="price-amount" style="color:${p.color==='gold'?'var(--gold)':p.color==='spotify'?'var(--spotify)':p.color==='pink'?'var(--pink)':'var(--text)'}">${p.price.toFixed(2)} €</div>
+        <div class="price-period">${p.period}</div>
       </div>
-      <div class="grid" id="grid-${cat.id}"></div>`;
-    root.appendChild(section);
-    const grid = section.querySelector(`#grid-${cat.id}`);
-    catProducts.forEach(p => grid.appendChild(makeCard(p)));
+      <button class="btn btn-card ${p.color==='gold'?'btn-gold':p.color==='spotify'?'btn-spotify':p.color==='pink'?'btn-outline':'btn-blurple'}" onclick="addToCart('${p.id}')" ${!p.available?'disabled':''}>
+        ${p.available ? 'Ajouter au panier' : 'Indisponible'}
+      </button>`;
+    grid.appendChild(div);
   });
+  // re-observe
   document.querySelectorAll('.animate-in:not(.visible)').forEach(el => observer.observe(el));
 }
 
@@ -743,35 +694,22 @@ function renderDashboard() {
   });
 }
 
-async function saveProduct(i) {
+function saveProduct(i) {
   products[i].name = document.getElementById(`d-name-${i}`).value;
   products[i].desc = document.getElementById(`d-desc-${i}`).value;
   products[i].price = parseFloat(document.getElementById(`d-price-${i}`).value) || products[i].price;
   products[i].period = document.getElementById(`d-period-${i}`).value;
   products[i].available = document.getElementById(`d-avail-${i}`).checked;
-  await saveProducts(products);
+  saveProducts(products);
+  renderProducts();
   showToast('Produit mis à jour ! ✓');
 }
 
 // ========================
 // INIT
 // ========================
+renderProducts();
 document.querySelectorAll('.animate-in').forEach(el => observer.observe(el));
-
-// Exposition globale des fonctions (requis pour type="module")
-window.addToCart = addToCart;
-window.removeFromCart = removeFromCart;
-window.openModal = openModal;
-window.closeModal = closeModal;
-window.checkout = checkout;
-window.closeConfirm = closeConfirm;
-window.toggleFaq = toggleFaq;
-window.openLogin = openLogin;
-window.closeLogin = closeLogin;
-window.checkLogin = checkLogin;
-window.openDashboard = openDashboard;
-window.closeDashboard = closeDashboard;
-window.saveProduct = saveProduct;
 </script>
 </body>
 </html>
